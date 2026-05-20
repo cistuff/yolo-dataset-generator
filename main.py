@@ -28,24 +28,7 @@ def add_image_to_dataset(cv2Image, imageObj, img_name_extension):
 
     with open(labels_val_path + "\\" + image_name + ".txt", "w") as labels: # val folder
         labels.write(str(class_index) + " .5 .5 1.0 1.0")
-
-# Handle image when looping through raw data function
-
-def handle_add_image(file):
-    fileName = os.fsdecode(file)
-    className = fileName[::-1]
-    className = className.split(".", 1)
-    if len(className) > 0:
-        className = className[1]
-    else:
-        return
-    className = className[::-1]
-    images.append({
-        "index": len(images),
-        "name": className,
-        "path": folder_directory_name + "\\" + fileName
-    })
-
+        
 # Create dataset folder
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -53,17 +36,31 @@ dataset_path = path + "\\" + dataset_folder_name
 if not os.path.exists(dataset_path):
     os.makedirs(dataset_path)
 
+# Handle image when looping through raw data
+
+def handle_image_file(file_path):
+    class_name = file_path[::-1].split('\\', 1)[0].split('.', 1)[1][::-1]
+    images.append({
+        "index": len(images),
+        "name": class_name,
+        "path": file_path
+    })
+
+# Handle folder when looping through raw data
+
+def handle_folder_file(parent_folder_path):
+    parent_folder = os.fsencode(parent_folder_path)
+    for file in os.listdir(parent_folder):
+        file_path = os.fsdecode(parent_folder) + "\\" + os.fsdecode(file)
+
+        if os.path.isdir(file_path):
+            handle_folder_file(file_path)
+        else:
+            handle_image_file(file_path)
+
 # Loop through folders with folders in it and add images from those folders to array of images
 
-directory = os.fsencode(pathToData)
-    
-for folder in os.listdir(directory):
-    folder_name = os.fsdecode(folder)
-    folder_directory_name = pathToData + "\\" + folder_name
-
-    if os.path.isdir(folder_directory_name):
-        for file in os.listdir(os.fsencode(folder_directory_name)):
-            handle_add_image(file)
+handle_folder_file(pathToData)
 
 # Create classes.txt
 
