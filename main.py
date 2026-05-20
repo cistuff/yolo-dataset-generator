@@ -8,7 +8,9 @@ from create_image_data_functions import create_image_data_functions
 import os
 import cv2
 
-# Add image to dataset function\
+images = [] # Array to store all images in data
+
+# Add image to dataset function
 
 def add_image_to_dataset(cv2Image, imageObj, img_name_extension):
     image_name = imageObj['name'] + "_" + img_name_extension
@@ -27,6 +29,23 @@ def add_image_to_dataset(cv2Image, imageObj, img_name_extension):
     with open(labels_val_path + "\\" + image_name + ".txt", "w") as labels: # val folder
         labels.write(str(class_index) + " .5 .5 1.0 1.0")
 
+# Handle image when looping through raw data function
+
+def handle_add_image(file):
+    fileName = os.fsdecode(file)
+    className = fileName[::-1]
+    className = className.split(".", 1)
+    if len(className) > 0:
+        className = className[1]
+    else:
+        return
+    className = className[::-1]
+    images.append({
+        "index": len(images),
+        "name": className,
+        "path": folder_directory_name + "\\" + fileName
+    })
+
 # Create dataset folder
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -34,28 +53,17 @@ dataset_path = path + "\\" + dataset_folder_name
 if not os.path.exists(dataset_path):
     os.makedirs(dataset_path)
 
-# Get array of images
-
-images = []
+# Loop through folders with folders in it and add images from those folders to array of images
 
 directory = os.fsencode(pathToData)
     
 for folder in os.listdir(directory):
     folder_name = os.fsdecode(folder)
-    for file in os.listdir(os.fsencode(pathToData + "\\" + folder_name)):
-        fileName = os.fsdecode(file)
-        className = fileName[::-1]
-        className = className.split(".", 1)
-        if len(className) > 0:
-            className = className[1]
-        else:
-            continue
-        className = className[::-1]
-        images.append({
-            "index": len(images),
-            "name": className,
-            "path": pathToData + "\\" + folder_name + "\\" + fileName
-        })
+    folder_directory_name = pathToData + "\\" + folder_name
+
+    if os.path.isdir(folder_directory_name):
+        for file in os.listdir(os.fsencode(folder_directory_name)):
+            handle_add_image(file)
 
 # Create classes.txt
 
